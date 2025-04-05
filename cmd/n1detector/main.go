@@ -14,6 +14,7 @@ func main() {
 		ignoreFiles = flag.String("ignore", "", "Comma-separated list of files or patterns to ignore")
 		verbose     = flag.Bool("verbose", false, "Enable verbose output")
 	)
+	flag.Parse()
 	setupConfig(*ignoreFiles, *verbose)
 	singlechecker.Main(analyzer.N1Analyzer)
 }

@@ -27,9 +27,8 @@ func (r *Repository) PatchUsers(users []User) error {
 
 	for idx := range users {
 		if errs := errors.Join(
-			r.db.Model(&users[idx]).Omit("Languages.*").Association("Languages").Replace(users[idx].Languages),           // want `Potential N\+1 query detected: DB query inside a loop`
-			r.db.Model(&users[idx]).Select("LocationID", "EndDate", "SSO", "UpdatedByUserID").Updates(&users[idx]).Error, // want `Potential N\+1 query detected: DB query inside a loop` `Potential N\+1 query detected: DB query inside a loop`
-
+			r.db.Model(&users[idx]).Omit("Languages.*").Association("Languages").Replace(users[idx].Languages),           // want "Potential N\\+1 query detected: DB query called directly inside a loop"
+			r.db.Model(&users[idx]).Select("LocationID", "EndDate", "SSO", "UpdatedByUserID").Updates(&users[idx]).Error, // want "Potential N\\+1 query detected: DB query called directly inside a loop"
 		); errs != nil {
 			return errs
 		}

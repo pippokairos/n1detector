@@ -16,7 +16,7 @@ func SetLocation(users []User, locationID uint) error {
 	repo := NewRepository(db)
 
 	for _, user := range users {
-		err := repo.SetUserLocation(user.ID, locationID) // TODO: want `Potential N\+1 query detected`
+		err := repo.SetUserLocation(user.ID, locationID) // want "Potential N\\+1 query detected: call to example.SetUserLocation may lead to DB query inside loop"
 		if err != nil {
 			return err
 		}
