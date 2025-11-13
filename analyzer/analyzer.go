@@ -46,9 +46,10 @@ type Finding struct {
 	CallInLoop *ast.CallExpr
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	inspector := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	ssaData := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
+
 	prog := ssaData.Pkg.Prog
 	callGraph := cha.CallGraph(prog)
 
@@ -103,7 +104,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 			if isGormQueryCall(pass, callExpr) {
 				if GetConfig().Verbose {
-					fmt.Printf("  🚨 Direct DB call found inside loop at: %s (Line %d)\n", pass.Fset.Position(reportPos), line)
+					fmt.Printf("  Direct DB call found inside loop at: %s (Line %d)\n", pass.Fset.Position(reportPos), line)
 				}
 				pass.Reportf(reportPos, "Potential N+1 query detected: DB query called directly inside a loop")
 				reportedLinesInLoop[line] = true
@@ -130,7 +131,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 			if reachesDBQuery(callGraph, calleeFn, dbQueryFunctions) {
 				if GetConfig().Verbose {
-					fmt.Printf("  🚨 Indirect DB call via function %s called inside loop at: %s (Line %d)\n", calleeFn.Name(), pass.Fset.Position(reportPos), line)
+					fmt.Printf("  Indirect DB call via function %s called inside loop at: %s (Line %d)\n", calleeFn.Name(), pass.Fset.Position(reportPos), line)
 				}
 				pass.Reportf(reportPos, "Potential N+1 query detected: call to %s may lead to DB query inside loop", shortFuncName(calleeFn))
 				reportedLinesInLoop[line] = true
@@ -203,8 +204,7 @@ func findDBQueryFunctions(pass *analysis.Pass, ssaData *buildssa.SSA) map[*ssa.F
 						continue // Cannot map instruction without position
 					}
 
-					astCall := findAstCallExprAt(pass, pos)
-					if astCall != nil {
+					if astCall := findAstCallExprAt(pass, pos); astCall != nil {
 						if isGormQueryCall(pass, astCall) {
 							if GetConfig().Verbose {
 								fmt.Printf("      -> Found GORM call (%s) via instruction %v in %s\n", astCall.Fun, instr, fn.String())
@@ -294,8 +294,7 @@ func reachesDBQuery(callGraph *callgraph.Graph, startFn *ssa.Function, dbQueryFu
 		}
 
 		for _, edge := range node.Out { // Look at functions called by currentFn
-			callee := edge.Callee.Func
-			if callee != nil && !visited[callee] {
+			if callee := edge.Callee.Func; callee != nil && !visited[callee] {
 				if dbQueryFunctions[callee] {
 					if GetConfig().Verbose {
 						fmt.Printf("      -> Path found: %s -> ... -> %s (DB Query Func)\n", startFn.Name(), callee.Name())
