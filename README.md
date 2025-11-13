@@ -1,4 +1,5 @@
 # N1Detector
+
 Static analysis tool to detect N+1 query issues in a Go codebase
 
 ## Prerequisites
@@ -25,4 +26,4 @@ $ n1detector ./...
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+The tool is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
